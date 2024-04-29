@@ -9,6 +9,15 @@ const AuthRoute = () => {
     <div>
       <Routes>
         <Route
+          index
+          element={
+            <>
+              <PageTitle title="Login | Rayvers" />
+              <SignIn />
+            </>
+          }
+        />
+        <Route
           path="/auth/signin"
           element={
             <>

@@ -4,9 +4,10 @@ import Breadcrumb from '../../components/Breadcrumbs/Breadcrumb';
 import Logo from '../../images/logo/logo.png';
 import DefaultLayout from '../../layout/DefaultLayout';
 import { BASE_URL } from '../../components/DEFAULTS';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { setAccessToken } from '../../Redux/Splice/AppSplice';
 import ClipLoader from 'react-spinners/ClipLoader';
+import { RootState } from '../../Redux/store';
 
 const override: CSSProperties = {
   display: 'block',
@@ -21,7 +22,7 @@ const SignIn: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
 
   const dispatch = useDispatch();
-
+  
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -43,6 +44,7 @@ const SignIn: React.FC = () => {
           if (response.status === 200 && responseBody.token) {
             const token = responseBody.token;
             dispatch(setAccessToken(token));
+            window.location.replace('/');
             alert('Login attempt was successful ✅');
           }
         } catch (error: any) {
@@ -231,7 +233,7 @@ const SignIn: React.FC = () => {
               Sign In to Rayvers Admin
             </h2>
 
-            <form>
+            <div>
               <div className="mb-4">
                 <label className="mb-2.5 block font-medium text-black dark:text-white">
                   Email
@@ -304,7 +306,7 @@ const SignIn: React.FC = () => {
                 <button
                   disabled={loading}
                   onClick={handleSubmit}
-                  className={`w-full cursor-pointer rounded-lg border border-primary ${loading ? 'graydark' : 'bg-primary'} px-4 h-[3rem] text-white transition hover:bg-opacity-90`}
+                  className="w-full cursor-pointer rounded-lg border border-primary bg-primary p-4 text-white transition hover:bg-opacity-90"
                 >
                   {loading ? (
                     <ClipLoader
@@ -370,7 +372,7 @@ const SignIn: React.FC = () => {
                   </Link>
                 </p>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       </div>
