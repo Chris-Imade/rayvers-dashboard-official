@@ -5,12 +5,14 @@ interface AppState {
   token: string | null;
   userId: number | null;
   userInfo: UserInfo | null;
+  profile: Profile | null;
 }
 
 const initialState: AppState = {
   token: null,
   userId: null,
   userInfo: null,
+  profile: null,
 };
 
 export const appSlice = createSlice({
@@ -26,6 +28,9 @@ export const appSlice = createSlice({
     setUserInfo: (state, action: PayloadAction<UserInfo>) => {
       state.userInfo = action.payload;
     },
+    setProfile: (state, action: PayloadAction<Profile | null>) => {
+      state.profile = action.payload;
+    }
   },
 });
 
@@ -34,6 +39,7 @@ export const {
   setAccessToken,
   setUserId,
   setUserInfo,
+  setProfile,
 } = appSlice.actions;
 
 export default appSlice.reducer;
