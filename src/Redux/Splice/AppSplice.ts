@@ -6,6 +6,7 @@ interface AppState {
   userId: number | null;
   userInfo: UserInfo | null;
   profile: Profile | null;
+  restaurant: Restaurant | null;
 }
 
 const initialState: AppState = {
@@ -13,6 +14,7 @@ const initialState: AppState = {
   userId: null,
   userInfo: null,
   profile: null,
+  restaurant: null,
 };
 
 export const appSlice = createSlice({
@@ -25,11 +27,14 @@ export const appSlice = createSlice({
     setUserId: (state, action: PayloadAction<number | null>) => {
       state.userId = action.payload;
     },
-    setUserInfo: (state, action: PayloadAction<UserInfo>) => {
+    setUserInfo: (state, action: PayloadAction<UserInfo | null>) => {
       state.userInfo = action.payload;
     },
     setProfile: (state, action: PayloadAction<Profile | null>) => {
       state.profile = action.payload;
+    },
+    setRestaurants: (state, action: PayloadAction<Restaurant | null>) => {
+      state.restaurant = action.payload;
     }
   },
 });
@@ -40,6 +45,7 @@ export const {
   setUserId,
   setUserInfo,
   setProfile,
+  setRestaurants,
 } = appSlice.actions;
 
 export default appSlice.reducer;

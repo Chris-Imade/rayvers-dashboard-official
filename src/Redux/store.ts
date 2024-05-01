@@ -11,7 +11,9 @@ const persistConfig = {
   storage: AsyncStorage,
   whitelist: [
     'token',
-    'userInfo'
+    'userInfo',
+    'profile',
+    'restaurant'
   ],
 };
 

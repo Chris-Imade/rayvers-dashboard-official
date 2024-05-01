@@ -1,8 +1,204 @@
+import { CSSProperties, DragEvent, useState } from 'react';
 import Breadcrumb from '../components/Breadcrumbs/Breadcrumb';
 import userThree from '../images/user/user-03.png';
 import DefaultLayout from '../layout/DefaultLayout';
+import { BASE_URL } from '../components/DEFAULTS';
+import { RootState } from '../Redux/store';
+import { useDispatch, useSelector } from 'react-redux';
+import { format } from 'date-fns';
+import { setProfile } from '../Redux/Splice/AppSplice';
+import { truncTxt } from '../utils/truncateText';
+import { ClipLoader } from 'react-spinners';
+
+const override: CSSProperties = {
+  display: 'block',
+  margin: '0 auto',
+  borderColor: 'white',
+};
 
 const Settings = () => {
+  const [loading, setLoading] = useState<boolean>(false);
+  const [loadingImage, setLoadingImage] = useState<boolean>(false);
+  const [error, setError] = useState<any | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [dragging, setDragging] = useState<boolean>(false);
+  const [name, setName] = useState<string>('');
+  const [bio, setBio] = useState<string>('');
+  const [date, setDate] = useState<string>('');
+  const [image, setImage] = useState<string | null>(null);
+
+  console.log('name: ', name, 'Phone: ', 'Bio: ', bio);
+
+  const profile = useSelector((state: RootState) => state.data.profile);
+
+  const token = useSelector((state: RootState) => state.data.token);
+
+  const dispatch = useDispatch();
+
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () =>
+        resolve(reader.result?.toString().split(',')[1] || '');
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  // Function to handle file selection
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      try {
+        const base64String = await fileToBase64(file);
+        setImage(base64String);
+        setSelectedFile(file);
+        console.log('base64 String: ', base64String);
+      } catch (error) {
+        console.error('Error converting file to base64:', error);
+      }
+    }
+  };
+
+  const handleDrop = (event: React.DragEvent<HTMLInputElement>) => {
+    event.preventDefault();
+    const file = event.dataTransfer.files[0];
+    if (file) {
+      setSelectedFile(file);
+    }
+  };
+
+  const handleDragOver = (event: DragEvent<HTMLInputElement>) => {
+    event.preventDefault();
+  };
+
+  const createDate = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formattedDate = format(new Date(e.target.value), 'yyyy-MM-dd');
+    setDate(formattedDate);
+  };
+
+  const convertBase642Url = async () => {
+    try {
+      const response = await fetch(
+        `https://img2url-converter.onrender.com/upload/`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            image,
+            imageFormat: selectedFile?.type.split('/')[1],
+          }),
+        },
+      );
+
+      if (response.ok) {
+        const responseData = await response.json();
+        console.log(
+          'Image uploaded successfully. Cloudinary URL:',
+          responseData.url,
+        );
+        return responseData.url;
+      }
+    } catch (error: any) {
+      console.error('Error converting img to url:', error);
+      setError(`Error converting img to url:${error.message}`);
+    }
+  };
+
+  const uploadProfilePhoto = async () => {
+    setLoadingImage(true);
+    try {
+      let imageUrl = null;
+
+      // Check if image base64 data is available
+      if (image?.length) {
+        imageUrl = await convertBase642Url();
+      }
+
+      const formData = new FormData();
+
+      if (image && imageUrl) {
+        formData.append('image_url', imageUrl);
+      }
+
+      const response = await fetch(`${BASE_URL}auth/users/me/`, {
+        method: 'PUT',
+        headers: {
+          // 'Content-Type': 'multipart/form-data',
+          Authorization: `Token ${token}`,
+        },
+        body: formData,
+      });
+
+      if (response.ok) {
+        // Handle success if needed
+        const userInfo = await response.json();
+        console.log(userInfo);
+        dispatch(setProfile(userInfo));
+        setLoadingImage(false);
+      } else {
+        const errRes = await response.json();
+        console.log('Error: ', errRes);
+      }
+    } catch (error: any) {
+      // Handle error if needed
+      console.log(error);
+      setLoadingImage(false);
+      setError(`Error updating profile: ${error.message}`);
+      console.log(`Error updating profile: ${error.message}`);
+    }
+  };
+
+  const updateProfile = async (e: any) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const formData = new FormData();
+      if (name.length) {
+        formData.append('name', name);
+      }
+      if (date) {
+        formData.append('date_of_birth', date);
+      }
+      if (bio.length) {
+        formData.append('bio', bio);
+      }
+      if (selectedFile && selectedFile?.size > 0) {
+        formData.append('profile_picture', selectedFile);
+      }
+
+      const response = await fetch(`${BASE_URL}auth/users/me/`, {
+        method: 'PUT',
+        headers: {
+          // 'Content-Type': 'multipart/form-data',
+          Authorization: `Token ${token}`,
+        },
+        body: formData,
+      });
+
+      if (response.ok) {
+        // Handle success if needed
+        const userInfo = await response.json();
+        console.log(userInfo);
+        dispatch(setProfile(userInfo));
+        setLoading(false);
+      } else {
+        const errRes = await response.json();
+        console.log('Error: ', errRes);
+      }
+    } catch (error: any) {
+      // Handle error if needed
+      console.log(error);
+      setLoading(false);
+      setError(`Error updating profile: ${error.message}`);
+      console.log(`Error updating profile: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <DefaultLayout>
       <div className="mx-auto max-w-270">
@@ -17,7 +213,7 @@ const Settings = () => {
                 </h3>
               </div>
               <div className="p-7">
-                <form action="#">
+                <div>
                   <div className="mb-5.5 flex flex-col gap-5.5 sm:flex-row">
                     <div className="w-full sm:w-1/2">
                       <label
@@ -57,8 +253,13 @@ const Settings = () => {
                           type="text"
                           name="fullName"
                           id="fullName"
-                          placeholder="Devid Jhon"
-                          defaultValue="Devid Jhon"
+                          placeholder={
+                            profile?.name ? profile.name : 'Devid Jhon'
+                          }
+                          defaultValue={
+                            profile?.name ? profile.name : 'Devid Jhon'
+                          }
+                          onChange={(e) => setName(e.target.value)}
                         />
                       </div>
                     </div>
@@ -66,80 +267,19 @@ const Settings = () => {
                     <div className="w-full sm:w-1/2">
                       <label
                         className="mb-3 block text-sm font-medium text-black dark:text-white"
-                        htmlFor="phoneNumber"
+                        htmlFor="date"
                       >
                         Phone Number
                       </label>
                       <input
                         className="w-full rounded border border-stroke bg-gray py-3 px-4.5 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
-                        type="text"
-                        name="phoneNumber"
-                        id="phoneNumber"
-                        placeholder="+990 3343 7865"
-                        defaultValue="+990 3343 7865"
+                        type="date"
+                        name="date"
+                        id="date"
+                        value={date}
+                        onChange={createDate}
                       />
                     </div>
-                  </div>
-
-                  <div className="mb-5.5">
-                    <label
-                      className="mb-3 block text-sm font-medium text-black dark:text-white"
-                      htmlFor="emailAddress"
-                    >
-                      Email Address
-                    </label>
-                    <div className="relative">
-                      <span className="absolute left-4.5 top-4">
-                        <svg
-                          className="fill-current"
-                          width="20"
-                          height="20"
-                          viewBox="0 0 20 20"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <g opacity="0.8">
-                            <path
-                              fillRule="evenodd"
-                              clipRule="evenodd"
-                              d="M3.33301 4.16667C2.87658 4.16667 2.49967 4.54357 2.49967 5V15C2.49967 15.4564 2.87658 15.8333 3.33301 15.8333H16.6663C17.1228 15.8333 17.4997 15.4564 17.4997 15V5C17.4997 4.54357 17.1228 4.16667 16.6663 4.16667H3.33301ZM0.833008 5C0.833008 3.6231 1.9561 2.5 3.33301 2.5H16.6663C18.0432 2.5 19.1663 3.6231 19.1663 5V15C19.1663 16.3769 18.0432 17.5 16.6663 17.5H3.33301C1.9561 17.5 0.833008 16.3769 0.833008 15V5Z"
-                              fill=""
-                            />
-                            <path
-                              fillRule="evenodd"
-                              clipRule="evenodd"
-                              d="M0.983719 4.52215C1.24765 4.1451 1.76726 4.05341 2.1443 4.31734L9.99975 9.81615L17.8552 4.31734C18.2322 4.05341 18.7518 4.1451 19.0158 4.52215C19.2797 4.89919 19.188 5.4188 18.811 5.68272L10.4776 11.5161C10.1907 11.7169 9.80879 11.7169 9.52186 11.5161L1.18853 5.68272C0.811486 5.4188 0.719791 4.89919 0.983719 4.52215Z"
-                              fill=""
-                            />
-                          </g>
-                        </svg>
-                      </span>
-                      <input
-                        className="w-full rounded border border-stroke bg-gray py-3 pl-11.5 pr-4.5 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
-                        type="email"
-                        name="emailAddress"
-                        id="emailAddress"
-                        placeholder="devidjond45@gmail.com"
-                        defaultValue="devidjond45@gmail.com"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="mb-5.5">
-                    <label
-                      className="mb-3 block text-sm font-medium text-black dark:text-white"
-                      htmlFor="Username"
-                    >
-                      Username
-                    </label>
-                    <input
-                      className="w-full rounded border border-stroke bg-gray py-3 px-4.5 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
-                      type="text"
-                      name="Username"
-                      id="Username"
-                      placeholder="devidjhon24"
-                      defaultValue="devidjhon24"
-                    />
                   </div>
 
                   <div className="mb-5.5">
@@ -186,6 +326,7 @@ const Settings = () => {
                         name="bio"
                         id="bio"
                         rows={6}
+                        onChange={(e) => setBio(e.target.value)}
                         placeholder="Write your bio here"
                         defaultValue="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque posuere fermentum urna, eu condimentum mauris tempus ut. Donec fermentum blandit aliquet."
                       ></textarea>
@@ -200,13 +341,24 @@ const Settings = () => {
                       Cancel
                     </button>
                     <button
+                      onClick={updateProfile}
                       className="flex justify-center rounded bg-primary py-2 px-6 font-medium text-gray hover:bg-opacity-90"
-                      type="submit"
                     >
-                      Save
+                      {loading ? (
+                        <ClipLoader
+                          color={'#ffffff'}
+                          loading={loading}
+                          cssOverride={override}
+                          size={30}
+                          aria-label="Loading Spinner"
+                          data-testid="loader"
+                        />
+                      ) : (
+                        'Save'
+                      )}
                     </button>
                   </div>
-                </form>
+                </div>
               </div>
             </div>
           </div>
@@ -218,33 +370,34 @@ const Settings = () => {
                 </h3>
               </div>
               <div className="p-7">
-                <form action="#">
+                <div>
                   <div className="mb-4 flex items-center gap-3">
                     <div className="h-14 w-14 rounded-full">
-                      <img src={userThree} alt="User" />
+                      <img
+                        className="rounded-full w-15 h-15 object-cover"
+                        src={profile?.image_url ? profile.image_url : userThree}
+                        alt="User"
+                      />
                     </div>
                     <div>
                       <span className="mb-1.5 text-black dark:text-white">
                         Edit your photo
-                      </span>
-                      <span className="flex gap-2.5">
-                        <button className="text-sm hover:text-primary">
-                          Delete
-                        </button>
-                        <button className="text-sm hover:text-primary">
-                          Update
-                        </button>
                       </span>
                     </div>
                   </div>
 
                   <div
                     id="FileUpload"
-                    className="relative mb-5.5 block w-full cursor-pointer appearance-none rounded border border-dashed border-primary bg-gray py-4 px-4 dark:bg-meta-4 sm:py-7.5"
+                    className={`relative mb-5.5 block w-full cursor-pointer appearance-none rounded border border-dashed border-primary bg-gray py-4 px-4 dark:bg-meta-4 sm:py-7.5 ${dragging && 'border-white'}`}
                   >
                     <input
                       type="file"
                       accept="image/*"
+                      onChange={handleFileChange}
+                      onDrop={handleDrop}
+                      onDragOver={handleDragOver}
+                      onDragEnter={() => setDragging(true)}
+                      onDragExit={() => setDragging(false)}
                       className="absolute inset-0 z-50 m-0 h-full w-full cursor-pointer p-0 opacity-0 outline-none"
                     />
                     <div className="flex flex-col items-center justify-center space-y-3">
@@ -276,30 +429,52 @@ const Settings = () => {
                           />
                         </svg>
                       </span>
-                      <p>
-                        <span className="text-primary">Click to upload</span> or
-                        drag and drop
-                      </p>
-                      <p className="mt-1.5">SVG, PNG, JPG or GIF</p>
-                      <p>(max, 800 X 800px)</p>
+                      {!selectedFile ? (
+                        <>
+                          <p>
+                            <span className="text-primary">
+                              Click to upload
+                            </span>{' '}
+                            or drag and drop
+                          </p>
+                          <p className="mt-1.5">SVG, PNG, JPG or GIF</p>
+                          <p>(max, 800 X 800px)</p>
+                        </>
+                      ) : (
+                        <p className="w-full">
+                          File: {truncTxt(selectedFile.name, 30)}
+                        </p>
+                      )}
                     </div>
                   </div>
 
                   <div className="flex justify-end gap-4.5">
                     <button
+                      onClick={() => setSelectedFile(null)}
                       className="flex justify-center rounded border border-stroke py-2 px-6 font-medium text-black hover:shadow-1 dark:border-strokedark dark:text-white"
                       type="submit"
                     >
                       Cancel
                     </button>
                     <button
+                      onClick={uploadProfilePhoto}
                       className="flex justify-center rounded bg-primary py-2 px-6 font-medium text-gray hover:bg-opacity-90"
-                      type="submit"
                     >
-                      Save
+                      {loadingImage ? (
+                        <ClipLoader
+                          color={'#ffffff'}
+                          loading={loading}
+                          cssOverride={override}
+                          size={30}
+                          aria-label="Loading Spinner"
+                          data-testid="loader"
+                        />
+                      ) : (
+                        'Save'
+                      )}
                     </button>
                   </div>
-                </form>
+                </div>
               </div>
             </div>
           </div>

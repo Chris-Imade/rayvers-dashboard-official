@@ -9,6 +9,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../Redux/store';
 import { setProfile } from '../Redux/Splice/AppSplice';
 import { ClipLoader } from 'react-spinners';
+import { format } from "date-fns";
 
 const override: CSSProperties = {
   display: 'block',
@@ -19,37 +20,8 @@ const override: CSSProperties = {
 const Profile = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<any | null>(null);
-  const [editProfile, setEditProfile] = useState<boolean>(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [dragging, setDragging] = useState<boolean>(false);
-  const [name, setName] = useState<string>('');
-  const [bio, setBio] = useState<string>('');
-  const [date, setDate] = useState<Date | null>(null);
-
-  console.log('file: ', selectedFile);
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files && event.target.files[0];
-    if (file) {
-      setSelectedFile(file);
-    }
-  };
-
-  const handleDrop = (event: React.DragEvent<HTMLLabelElement>) => {
-    event.preventDefault();
-    const file = event.dataTransfer.files[0];
-    if (file) {
-      setSelectedFile(file);
-    }
-  };
-
-  const handleDragOver = (event: React.DragEvent<HTMLLabelElement>) => {
-    event.preventDefault();
-  };
 
   const profile = useSelector((state: RootState) => state.data.profile);
-  const userProfile = useSelector((state: RootState) => state.data.userInfo);
-  console.log('profile: ', profile);
   // Redux
   const token = useSelector((state: RootState) => state.data.token);
 
@@ -71,66 +43,25 @@ const Profile = () => {
         setError(null);
         const responseBody = await response.json();
         dispatch(setProfile(responseBody));
+        console.log('working: ', responseBody);
       } else {
         setLoading(false);
         const errorRes = await response.json();
         dispatch(setProfile(null));
         setError(errorRes);
+        console.log('not working: ', errorRes);
       }
     } catch (error: any) {
       setLoading(false);
       setError(error.message);
       dispatch(setProfile(null));
+      console.log('Err: ', error);
     }
   };
 
   useEffect(() => {
     fetchProfile();
   }, []);
-
-  const updateProfile = async () => {
-    setLoading(true);
-
-    try {
-      const formData = new FormData();
-      if (name.length) {
-        formData.append('name', name);
-      } else if (date) {
-        formData.append('date_of_birth', date.toISOString());
-      } else if (bio.length) {
-        formData.append('bio', bio);
-      } else if (selectedFile) {
-        formData.append('profile_picture', selectedFile);
-      }
-
-      const response = await fetch(`${BASE_URL}auth/users/me/`, {
-        method: 'PUT',
-        headers: {
-          Authorization: `Token ${token}`,
-        },
-        body: formData,
-      });
-
-      if (response.ok) {
-        // Handle success if needed
-        const userInfo = await response.json();
-        console.log(userInfo);
-        dispatch(setProfile(userInfo));
-        setLoading(false);
-      } else {
-        const errRes = await response.json();
-        console.log('Error: ', errRes);
-      }
-    } catch (error: any) {
-      // Handle error if needed
-      console.log(error);
-      setLoading(false);
-      setError(`Error updating profile: ${error.message}`);
-      console.log(`Error updating profile: ${error.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <DefaultLayout>
@@ -145,25 +76,26 @@ const Profile = () => {
           />
         </div>
         <div className="px-4 pb-6 text-center lg:pb-8 xl:pb-11.5">
-          <div className="relative z-30 mx-auto -mt-22 h-30 w-full max-w-30 rounded-full bg-white/20 p-1 backdrop-blur sm:h-44 sm:max-w-44 sm:p-3">
+          <div className="relative z-30 mx-auto -mt-22 h-30 w-full max-w-30 rounded-full bg-white/20 p-1 backdrop-blur sm:h-44 sm:max-w-44 sm:p-3 overflow-hidden flex justify-center items-center">
             <div className="relative drop-shadow-2">
               <img
                 src={
-                  profile?.profile_picture?.includes('https')
-                    ? profile.profile_picture
+                  profile?.image_url
+                    ? profile.image_url
                     : userSix
                 }
+                className='object-cover rounded-full h-[9rem] w-[9rem]'
                 alt="profile"
               />
             </div>
           </div>
           <div className="mt-4">
             <h3 className="mb-1.5 text-2xl font-semibold text-black dark:text-white">
-              Danish Heilium
+              {profile?.name}
             </h3>
             <p className="font-medium capitalize">{profile?.role}</p>
             <div className="mx-auto mt-4.5 mb-5.5 grid max-w-94 grid-cols-3 rounded-md border border-stroke py-2.5 shadow-1 dark:border-strokedark dark:bg-[#37404F]">
-              <div className="flex flex-col items-center justify-center gap-1 border-r border-stroke px-4 dark:border-strokedark xsm:flex-row">
+              {/* <div className="flex flex-col items-center justify-center gap-1 border-r border-stroke px-4 dark:border-strokedark xsm:flex-row">
                 <span className="font-semibold text-black dark:text-white">
                   259
                 </span>
@@ -180,7 +112,7 @@ const Profile = () => {
                   2K
                 </span>
                 <span className="text-sm">Following</span>
-              </div>
+              </div> */}
             </div>
 
             <div className="mx-auto max-w-180">
@@ -188,11 +120,7 @@ const Profile = () => {
                 About Me
               </h4>
               <p className="mt-4.5">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                Pellentesque posuere fermentum urna, eu condimentum mauris
-                tempus ut. Donec fermentum blandit aliquet. Etiam dictum dapibus
-                ultricies. Sed vel aliquet libero. Nunc a augue fermentum,
-                pharetra ligula sed, aliquam lacus.
+                {profile?.bio}
               </p>
             </div>
 
@@ -349,87 +277,6 @@ const Profile = () => {
               </div>
             </div>
           </div>
-          {/* Edit Profile Section */}
-          <button
-            onClick={() => {
-              setEditProfile((prevState) => !prevState);
-            }}
-            className="w-full py-3 border mt-8"
-          >
-            Edit Profile
-          </button>
-
-          {/* Edit Profile Form Below */}
-          {editProfile && (
-            <div className="mt-12">
-              <div
-                className={`bg-primary w-full h-[10rem] rounded-md flex justify-center items-center ${dragging && 'border-[3px] border-dashed border-white'}`}
-              >
-                <label
-                  className="h-full w-full flex justify-center items-center p-12"
-                  htmlFor="file"
-                  onDrop={handleDrop}
-                  onDragOver={handleDragOver}
-                  onDragEnter={() => setDragging(true)}
-                  onDragExit={() => setDragging(false)}
-                >
-                  <input
-                    id="file"
-                    type="file"
-                    onChange={handleFileChange}
-                    style={{ display: 'none' }}
-                  />
-                  {selectedFile ? (
-                    <p>Selected file: {selectedFile.name}</p>
-                  ) : (
-                    <p>Drag & drop your file here, or click to select</p>
-                  )}
-                </label>
-              </div>
-
-              <div className="mt-12">
-                <input
-                  className="text-slate-800 placeholder:text-slate-700 w-1/2 pl-4 py-4 border-r-4 outline-none"
-                  type="text"
-                  placeholder="Your name"
-                  onChange={(e) => setName(e.target.value)}
-                  value={name}
-                />
-                <input
-                  className="text-slate-800 w-1/2 pl-4 py-4 outline-none"
-                  type="date"
-                  value={date ? date.toISOString().split('T')[0] : ''}
-                  onChange={(e) => setDate(new Date(e.target.value))}
-                />
-                <textarea
-                  className="text-slate-800 placeholder:text-slate-700 w-full pl-4 py-4 border-t-4 outline-none min-h-[10rem]"
-                  placeholder="Bio"
-                  onChange={(e) => setBio(e.target.value)}
-                  value={bio}
-                />
-              </div>
-
-              <div>
-                <button
-                  onClick={updateProfile}
-                  className="w-full py-4 bg-primary text-white mt-4 rounded-md"
-                >
-                  {loading ? (
-                    <ClipLoader
-                      color={'#ffffff'}
-                      loading={loading}
-                      cssOverride={override}
-                      size={30}
-                      aria-label="Loading Spinner"
-                      data-testid="loader"
-                    />
-                  ) : (
-                    'Update Profile'
-                  )}
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </DefaultLayout>
