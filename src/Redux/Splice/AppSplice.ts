@@ -1,5 +1,4 @@
-import { createSlice, current, PayloadAction } from "@reduxjs/toolkit";
-
+import { createSlice, current, PayloadAction } from '@reduxjs/toolkit';
 
 interface AppState {
   token: string | null;
@@ -7,6 +6,7 @@ interface AppState {
   userInfo: UserInfo | null;
   profile: Profile | null;
   restaurant: Restaurant | null;
+  restCredentials: RestLogin[] | null;
 }
 
 const initialState: AppState = {
@@ -15,10 +15,11 @@ const initialState: AppState = {
   userInfo: null,
   profile: null,
   restaurant: null,
+  restCredentials: [],
 };
 
 export const appSlice = createSlice({
-  name: "data",
+  name: 'data',
   initialState,
   reducers: {
     setAccessToken: (state, action: PayloadAction<string | null>) => {
@@ -35,7 +36,14 @@ export const appSlice = createSlice({
     },
     setRestaurants: (state, action: PayloadAction<Restaurant | null>) => {
       state.restaurant = action.payload;
-    }
+    },
+    createRestCred: (state, action: PayloadAction<RestLogin | null>) => {
+      let newCred = [];
+      if (state.restCredentials !== null && action.payload !== null) {
+        newCred = [...state.restCredentials, action.payload];
+        state.restCredentials = newCred;
+      }
+    },
   },
 });
 
@@ -46,6 +54,7 @@ export const {
   setUserInfo,
   setProfile,
   setRestaurants,
+  createRestCred,
 } = appSlice.actions;
 
 export default appSlice.reducer;

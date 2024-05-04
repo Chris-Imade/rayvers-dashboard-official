@@ -5,7 +5,7 @@ import Logo from '../../images/logo/logo.png';
 import DefaultLayout from '../../layout/DefaultLayout';
 import { BASE_URL } from '../../components/DEFAULTS';
 import { useDispatch, useSelector } from 'react-redux';
-import { setAccessToken } from '../../Redux/Splice/AppSplice';
+import { setAccessToken, setUserId } from '../../Redux/Splice/AppSplice';
 import ClipLoader from 'react-spinners/ClipLoader';
 import { RootState } from '../../Redux/store';
 
@@ -17,61 +17,59 @@ const override: CSSProperties = {
 
 const SignIn: React.FC = () => {
   const [password, setPassword] = useState<string>('');
-  const [email, setEmail] = useState<string>('');
+  const [kitchenId, setKitchenId] = useState<string>('');
   const [error, setError] = useState<null | any>(null);
   const [loading, setLoading] = useState<boolean>(false);
 
   const dispatch = useDispatch();
-  
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
     try {
-      const response = await fetch(`${BASE_URL}auth/token/`, {
+      const response = await fetch(`${BASE_URL}auth/restaurants/token/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({
+          kitchen_id: kitchenId,
+          password,
+        }),
       });
 
       if (response.ok) {
-        setError(null);
         setLoading(false);
+        setError(null);
         try {
-          const responseBody = await response.json();
-          if (response.status === 200 && responseBody.token) {
-            const token = responseBody.token;
-            dispatch(setAccessToken(token));
-            window.location.replace('/');
-            alert('Login attempt was successful ✅');
-          }
+          const result = await response.json();
+          // console.log(result.token);
+          const { token, user_id, restaurant_id } = result;
+          // console.log("restaurant_id: ", restaurant_id);
+          dispatch(setAccessToken(token));
+          // console.log('restaurant_id: ', restaurant_id);
+          dispatch(setUserId(user_id));
+          // dispatch(set(restaurant_id));
         } catch (error: any) {
-          console.log(`Error: ${error.message}`);
-          setLoading(false);
+          console.log(`Error: ${error}`);
         }
       } else {
-        setLoading(false);
         try {
-          const responseBody = await response.json(); // Parse the JSON response
-          if (response.status === 400 && responseBody.non_field_errors) {
-            setError(responseBody.non_field_errors[0]);
-            setLoading(false);
-          } else {
-            setError('An error occurred. Please try again.');
-            setLoading(false);
-          }
-        } catch (error: any) {
           setLoading(false);
-          console.error(error);
-          setError(`Login Error: ${error.message}`);
+          const errorResponse = await response.json();
+          console.log('Error response:', errorResponse); // Log the error response object for debugging purposes
+          setError(
+            `Error: ${errorResponse.message || 'Something went wrong ☹️'}`,
+          ); // Assuming there's a message property in the error response
+        } catch (error) {
+          console.log('Error parsing error response:', error);
+          setError('Error: Something went wrong ☹️');
         }
       }
     } catch (error: any) {
-      console.log(`Error: ${error.message}`);
-      setError(`Login Error: ${error.message}`);
       setLoading(false);
+      console.log(`Error: ${error.message}`);
+      setError(`Error: ${error.message}`);
     }
   };
 
@@ -230,19 +228,19 @@ const SignIn: React.FC = () => {
           <div className="w-full p-4 sm:p-12.5 xl:p-17.5">
             <span className="mb-1.5 block font-medium">Start for free</span>
             <h2 className="mb-9 text-2xl font-bold text-black dark:text-white sm:text-title-xl2">
-              Sign In to Rayvers Admin
+              Sign In to Rayvers Kitchen
             </h2>
 
             <div>
               <div className="mb-4">
                 <label className="mb-2.5 block font-medium text-black dark:text-white">
-                  Email
+                  KitchenID
                 </label>
                 <div className="relative">
                   <input
-                    type="email"
-                    placeholder="Enter your email"
-                    onChange={(e) => setEmail(e.target.value)}
+                    type="text"
+                    placeholder="Enter your kitchenID"
+                    onChange={(e) => setKitchenId(e.target.value)}
                     className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                   />
 
@@ -363,15 +361,6 @@ const SignIn: React.FC = () => {
                 </span>
                 Sign in with Google
               </button>
-
-              <div className="mt-6 text-center">
-                <p>
-                  Don’t have any account?{' '}
-                  <Link to="/auth/signup" className="text-primary">
-                    Sign Up
-                  </Link>
-                </p>
-              </div>
             </div>
           </div>
         </div>

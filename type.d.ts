@@ -56,3 +56,10 @@ interface RestDetail {
   rating: number;
   _dishes: Dish[];
 }
+
+interface RestLogin {
+  restaurantId: number;
+  kitchenId: string;
+  password: string;
+  name: string;
+}

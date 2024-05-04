@@ -122,6 +122,9 @@ const Profile = () => {
               <p className="mt-4.5">
                 {profile?.bio}
               </p>
+              <p className="mt-4.5">
+                {profile?.email}
+              </p>
             </div>
 
             <div className="mt-6.5">

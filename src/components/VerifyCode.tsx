@@ -6,6 +6,7 @@ import { ClipLoader } from 'react-spinners';
 
 interface VerifyCodeProps {
   setSuccess: React.Dispatch<React.SetStateAction<boolean>>;
+  newResUserId?: number | null;
 }
 
 const override: CSSProperties = {
@@ -14,7 +15,7 @@ const override: CSSProperties = {
   borderColor: 'white',
 };
 
-const VerifyCode: React.FC<VerifyCodeProps> = ({ setSuccess }) => {
+const VerifyCode: React.FC<VerifyCodeProps> = ({ setSuccess, newResUserId }) => {
   const [verificationCode, setVerificationCode] = useState<string>('');
   const [resendTime, setResendTime] = useState<number>(300); // 5 minutes in seconds
   const [isTimeUp, setIsTimeUp] = useState<boolean>(false);
@@ -23,6 +24,10 @@ const VerifyCode: React.FC<VerifyCodeProps> = ({ setSuccess }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [loadingResendCode, setLoadingResendCode] = useState<boolean>(false);
   const [modalVisible, setModalVisible] = useState<boolean>(false);
+
+  useEffect(() => {
+    if(modalVisible) setSuccess(false);
+  }, [modalVisible]);
 
   //   Redux
   const userId = useSelector((state: RootState) => state.data.userId);
@@ -83,7 +88,7 @@ const VerifyCode: React.FC<VerifyCodeProps> = ({ setSuccess }) => {
         },
         body: JSON.stringify({
           code: Number(verificationCode),
-          user_id: Number(userId),
+          user_id: Number(newResUserId ?? userId),
         }),
       });
 
@@ -137,7 +142,7 @@ const VerifyCode: React.FC<VerifyCodeProps> = ({ setSuccess }) => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            user_id: Number(userId),
+            user_id: Number(newResUserId ?? userId),
           }),
         },
       );

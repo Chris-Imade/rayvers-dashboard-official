@@ -1,5 +1,5 @@
 import React from 'react';
-import { Route, Routes, useLocation } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom';
 import SignIn from './SignIn';
 import PageTitle from '../../components/PageTitle';
 import SignUp from './SignUp';
@@ -23,15 +23,6 @@ const AuthRoute = () => {
             <>
               <PageTitle title="Login | Rayvers" />
               <SignIn />
-            </>
-          }
-        />
-        <Route
-          path="/auth/signup"
-          element={
-            <>
-              <PageTitle title="SignUp | Rayvers" />
-              <SignUp />
             </>
           }
         />
