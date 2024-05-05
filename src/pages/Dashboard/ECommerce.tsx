@@ -1,14 +1,97 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import CardDataStats from '../../components/CardDataStats';
 import ChartOne from '../../components/Charts/ChartOne';
 import ChartTwo from '../../components/Charts/ChartTwo';
 import DefaultLayout from '../../layout/DefaultLayout';
+import { BASE_URL } from '../../components/DEFAULTS';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../Redux/store';
+import { formatNumber } from '../../utils/currencyFormatter';
 
 const ECommerce: React.FC = () => {
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<any | null>(null);
+  const [result, setResult] = useState<ProfileMore | null>();
+  const [restaurants, setRestaurants] = useState<RestDetail[] | null>(null);
+
+  const token = useSelector((state: RootState) => state.data.token);
+
+  const getProfile = async () => {
+    try {
+      const response = await fetch(`${BASE_URL}auth/restaurants/me/`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Token ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('Result: ', result);
+        setResult(result);
+        setError(null);
+      } else {
+        const errRes = await response.json();
+        console.log('Error: ', errRes);
+        setResult(null);
+      }
+    } catch (error: any) {
+      console.log('Error: ', error.message);
+      setError(error.message);
+      setResult(null);
+    }
+
+    const getRestaurants = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(`${BASE_URL}api/restaurants/`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Token ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const responseBody = await response.json();
+          const { results } = responseBody;
+          setLoading(false);
+          setError(null);
+          setRestaurants(results);
+        } else {
+          const responseBody = await response.json();
+          setError(responseBody.detail);
+          console.log('Something went wrong');
+        }
+      } catch (error: any) {
+        setLoading(false);
+        console.log(error.message);
+        setError('Error: ' + error.message);
+      }
+    };
+    getRestaurants();
+  };
+
+  useEffect(() => {
+    getProfile();
+  }, []);
+
+
+  const totalDishes = restaurants?.reduce((acc, restaurant) => {
+    const dishesLength = restaurant._dishes?.length || 0;
+    return acc + dishesLength;
+  }, 0);
+
   return (
     <DefaultLayout>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-4 2xl:gap-7.5">
-        <CardDataStats title="Total views" total="$3.456K" rate="0.43%" levelUp>
+        <CardDataStats
+          title="Total Revenue"
+          total={`₦${result?.balance && formatNumber(Number(result?.balance))}`}
+          rate="0.43%"
+          levelUp
+        >
           <svg
             className="fill-primary dark:fill-white"
             width="22"
@@ -27,7 +110,12 @@ const ECommerce: React.FC = () => {
             />
           </svg>
         </CardDataStats>
-        <CardDataStats title="Total Profit" total="$45,2K" rate="4.35%" levelUp>
+        <CardDataStats
+          title="Total Profit"
+          total={`₦${result?.balance && formatNumber(Number(result?.balance))}`}
+          rate="4.35%"
+          levelUp
+        >
           <svg
             className="fill-primary dark:fill-white"
             width="20"
@@ -50,7 +138,7 @@ const ECommerce: React.FC = () => {
             />
           </svg>
         </CardDataStats>
-        <CardDataStats title="Total Product" total="2.450" rate="2.59%" levelUp>
+        <CardDataStats title="Total Dishes" total={`${totalDishes}`} rate="2.59%" levelUp>
           <svg
             className="fill-primary dark:fill-white"
             width="22"
@@ -69,7 +157,7 @@ const ECommerce: React.FC = () => {
             />
           </svg>
         </CardDataStats>
-        <CardDataStats title="Total Users" total="3.456" rate="0.95%" levelDown>
+        <CardDataStats title="Total Users" total="4" rate="0.95%" levelDown>
           <svg
             className="fill-primary dark:fill-white"
             width="22"

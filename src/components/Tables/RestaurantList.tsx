@@ -55,24 +55,27 @@ const RestaurantList = () => {
     <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
       <div className="flex justify-between items-center">
         <h4 className="mb-6 text-xl font-semibold text-black dark:text-white">
-          {createRest ? 'New Restaurant' : 'Brand List'}
+          {/* {createRest ? 'New Restaurant' : 'Brand List'} */}
+          {'Brand List'}
         </h4>
         <div>
-          <h4
-            onClick={() => setCreateRes((prev) => !prev)}
+          <a
+            href="https://rayvers-kitchen-api.vercel.app/admin/app/restaurant/add/"
+            target="_blank"
+            // onClick={() => setCreateRes((prev) => !prev)}
             className="hover:cursor-pointer mb-6 font-semibold text-black dark:text-white flex"
           >
-            {createRest && <p className="mr-3">&larr;</p>}
+            {/* {createRest && <p className="mr-3">&larr;</p>} */}
             Create Restaurant
-          </h4>
+          </a>
         </div>
       </div>
 
-      {createRest ? (
-        <CreateRest />
-      ) : (
-        <BrandList loading={loading} localRes={localRes} />
-      )}
+      {/* {createRest ? ( */}
+      {/* // <CreateRest /> */}
+      {/* ) : ( */}
+      <BrandList loading={loading} localRes={localRes} />
+      {/* // )} */}
     </div>
   );
 };

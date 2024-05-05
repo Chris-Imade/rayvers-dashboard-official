@@ -63,3 +63,20 @@ interface RestLogin {
   password: string;
   name: string;
 }
+
+interface ProfileMore {
+  address: string;
+  balance: string;
+  description: string;
+  id: number;
+  image: string | null;
+  image_url: string[];
+  name: string;
+  ratings: number;
+  permissions: {
+    is_customer: boolean;
+    is_driver: boolean;
+    is_restaurant: boolean;
+    is_superuser: boolean;
+  };
+}

@@ -21,6 +21,9 @@ const SignIn: React.FC = () => {
   const [error, setError] = useState<null | any>(null);
   const [loading, setLoading] = useState<boolean>(false);
 
+  const token = useSelector((state: RootState) => state.data.token);
+  console.log("token: ", token);
+
   const dispatch = useDispatch();
 
   const handleSubmit = async (e: FormEvent) => {
@@ -45,17 +48,18 @@ const SignIn: React.FC = () => {
           const result = await response.json();
           // console.log(result.token);
           const { token, user_id, restaurant_id } = result;
-          // console.log("restaurant_id: ", restaurant_id);
+          console.log("token: ", token);
+          console.log('restaurant_id: ', restaurant_id);
           dispatch(setAccessToken(token));
-          // console.log('restaurant_id: ', restaurant_id);
           dispatch(setUserId(user_id));
+          window.location.replace('/');
           // dispatch(set(restaurant_id));
         } catch (error: any) {
           console.log(`Error: ${error}`);
         }
       } else {
+        setLoading(false);
         try {
-          setLoading(false);
           const errorResponse = await response.json();
           console.log('Error response:', errorResponse); // Log the error response object for debugging purposes
           setError(

@@ -5,7 +5,7 @@ interface AppState {
   userId: number | null;
   userInfo: UserInfo | null;
   profile: Profile | null;
-  restaurant: Restaurant | null;
+  restaurant: Restaurant[] | null;
   restCredentials: RestLogin[] | null;
 }
 
@@ -34,7 +34,7 @@ export const appSlice = createSlice({
     setProfile: (state, action: PayloadAction<Profile | null>) => {
       state.profile = action.payload;
     },
-    setRestaurants: (state, action: PayloadAction<Restaurant | null>) => {
+    setRestaurants: (state, action: PayloadAction<Restaurant[] | null>) => {
       state.restaurant = action.payload;
     },
     createRestCred: (state, action: PayloadAction<RestLogin | null>) => {

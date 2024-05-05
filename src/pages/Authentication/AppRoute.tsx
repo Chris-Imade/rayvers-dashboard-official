@@ -14,7 +14,7 @@ const AppRoute = () => {
     setUserToken(token);
   }, [token]);
 
-  return userToken !== null ? <App /> : <AuthRoute />;
+  return userToken ? <App /> : <AuthRoute />;
 };
 
 export default AppRoute;
